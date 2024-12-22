@@ -2,6 +2,8 @@ import json
 import requests
 
 
+
+
 def get_city_location_key(api_key, city_name):
     """
     получаем ключ от конкретной локации для дальнейшего определения погоды в этой локации
@@ -10,8 +12,12 @@ def get_city_location_key(api_key, city_name):
     :return: int
     """
     r = requests.get(f'http://dataservice.accuweather.com/locations/v1/cities/search?apikey={api_key}&q={city_name}').json()
-    with open('../json_files/json_keys.json', 'w') as outfile:
+
+
+    with open('weather_of_the_cities.json', 'w') as outfile:
         json.dump(r, outfile, indent=4)
+
+
     return r[0]['Key']
 
 
@@ -25,8 +31,8 @@ def get_forecast_city_by_name(api_key: str, city_name: str, days: int):
     :return: json
     """
     city_loc_key = get_city_location_key(api_key, city_name)
-    if days == 0:
 
+    if days == 0:
 
         weather_url = f'http://dataservice.accuweather.com/forecasts/v1/hourly/1hour/{city_loc_key}'
         params = {
@@ -36,19 +42,42 @@ def get_forecast_city_by_name(api_key: str, city_name: str, days: int):
         response = requests.get(weather_url, params=params).json()
 
 
+    elif days == 5:
+
+        try:
+            weather_url = f'http://dataservice.accuweather.com/forecasts/v1/daily/5day/{city_loc_key}'
+            params = {
+                "apikey": api_key,
+                "details": "true"
+            }
+            response = requests.get(weather_url, params=params).json()
+
+        except Exception as e:
+
+            print(f"Ошибка при запросе к API: {e}")
+            return None
+
+
+    elif days == 3:
+
+        try:
+            weather_url = f'http://dataservice.accuweather.com/forecasts/v1/daily/1day/{city_loc_key}'
+            params = {
+                "apikey": api_key,
+                "details": "true"
+            }
+            response = requests.get(weather_url, params=params).json()
+
+        except Exception as e:
+
+            print(f"Ошибка при запросе к API: {e}")
+            return None
+
     else:
+        return 'no more вариантов'
 
-
-        weather_url = f"https://dataservice.accuweather.com/forecasts/v1/daily/{days}day/{city_loc_key}"
-        params = {
-            "apikey": api_key,
-            "details": "true"
-        }
-        response = requests.get(weather_url, params=params).json()
-
-
-    # with open('../json_files/weather_2.json', 'w') as outfile:
-    #     json.dump(response, outfile)
+    with open('weather.json', 'w') as outfile:
+        json.dump(response, outfile, indent=4)
 
 
     data = {
@@ -62,7 +91,9 @@ def get_forecast_city_by_name(api_key: str, city_name: str, days: int):
 
     return data
 
-
+def presentation_of_the_data(data):
+    for key, value in data:
+        print(f'{key}: {value}\n')
 
 def check_bad_weather(data):
     weather_cool_or_bad = True
